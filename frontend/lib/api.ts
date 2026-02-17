@@ -1,8 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
-  withCredentials: true, // Send HTTP-only cookies automatically
+  baseURL: process.env.NODE_ENV === 'production' 
+    ? '/api'  // ✅ production → ผ่าน Next.js proxy
+    : 'http://localhost:3001', // ✅ local dev → ยังใช้ได้ปกติ
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
