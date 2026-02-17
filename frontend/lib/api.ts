@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
-    ? '/api'  // ✅ production → ผ่าน Next.js proxy
+    ? ''  // ✅ production → ผ่าน Next.js proxy
     : 'http://localhost:3001', // ✅ local dev → ยังใช้ได้ปกติ
   withCredentials: true,
   headers: {
