@@ -1,0 +1,24 @@
+# Node
+node_modules/
+package-lock.json
+yarn.lock
+
+# Env
+.env
+.env.local
+
+# Build
+dist/
+build/
+.next/
+.nuxt/
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
