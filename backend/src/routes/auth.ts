@@ -10,9 +10,9 @@ const router = Router();
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+  secure: true, // ต้องเป็น true เสมอใน production (https)
+  sameSite: 'none' as const, // ✅ เปลี่ยนจาก 'lax' → 'none' เพื่อให้ cross-origin ได้
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 // POST /api/auth/login
