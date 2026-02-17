@@ -15,6 +15,7 @@ import {
   Receipt,
   Truck,
   ClipboardList,
+  Files,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,12 +30,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user } = useAuth();
   const [docsExpanded, setDocsExpanded] = useState(true);
 
-  // Auto-expand docs section when on a doc page
   useEffect(() => {
     if (
       pathname.includes('/quotations') ||
       pathname.includes('/voi') ||
-      pathname.includes('/receipts')
+      pathname.includes('/receipts') ||
+      pathname.includes('/documents')
     ) {
       setDocsExpanded(true);
     }
@@ -42,11 +43,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const isActive = (path: string) => pathname === path;
   const isDocActive = () =>
-    ['/quotations', '/voi', '/receipts'].some((p) => pathname.includes(p));
+    ['/quotations', '/voi', '/receipts', '/documents'].some((p) =>
+      pathname.includes(p)
+    );
 
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
@@ -54,7 +56,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           'fixed top-0 left-0 h-full w-64 bg-card border-r border-border z-50 flex flex-col transition-transform duration-300 ease-in-out',
@@ -123,6 +124,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
             {docsExpanded && (
               <div className="mt-1 ml-4 pl-4 border-l border-border space-y-1">
+                {/* เอกสารทั้งหมด */}
+                <Link
+                  href="/documents"
+                  onClick={onClose}
+                  className={cn(
+                    'sidebar-item text-sm',
+                    isActive('/documents')
+                      ? 'sidebar-item-active'
+                      : 'sidebar-item-inactive'
+                  )}
+                >
+                  <Files className="w-4 h-4 flex-shrink-0" />
+                  <span>เอกสารทั้งหมด</span>
+                </Link>
+
                 <Link
                   href="/quotations"
                   onClick={onClose}
@@ -136,6 +152,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <ClipboardList className="w-4 h-4 flex-shrink-0" />
                   <span>ใบเสนอราคา</span>
                 </Link>
+
                 <Link
                   href="/voi"
                   onClick={onClose}
@@ -149,6 +166,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <Truck className="w-4 h-4 flex-shrink-0" />
                   <span>ใบส่งของ</span>
                 </Link>
+
                 <Link
                   href="/receipts"
                   onClick={onClose}
@@ -218,9 +236,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3 px-3 py-2">
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
-              {(user?.fullName || user?.username || 'U')
-                .charAt(0)
-                .toUpperCase()}
+              {(user?.fullName || user?.username || 'U').charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-foreground truncate">

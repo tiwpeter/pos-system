@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Plus,
   Search,
@@ -9,6 +10,7 @@ import {
   Loader2,
   ArrowRightLeft,
   Filter,
+  Eye,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
@@ -47,6 +49,7 @@ interface DocumentListProps {
 }
 
 export function DocumentList({ docType, title }: DocumentListProps) {
+  const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -62,7 +65,7 @@ export function DocumentList({ docType, title }: DocumentListProps) {
       const params = new URLSearchParams({ type: docType });
       if (statusFilter) params.append('status', statusFilter);
       if (search) params.append('search', search);
-      const { data } = await api.get(`/api/documents?${params}`);
+      const { data } = await api.get('/api/documents?' + params);
       setDocuments(data.documents);
     } catch {
       toast.error('ไม่สามารถโหลดข้อมูลได้');
@@ -77,7 +80,7 @@ export function DocumentList({ docType, title }: DocumentListProps) {
 
   async function handleDelete(id: string) {
     try {
-      await api.delete(`/api/documents/${id}`);
+      await api.delete('/api/documents/' + id);
       toast.success('ลบเอกสารเรียบร้อยแล้ว');
       fetchDocuments();
     } catch {
@@ -90,10 +93,10 @@ export function DocumentList({ docType, title }: DocumentListProps) {
   async function handleConvert(id: string) {
     setConverting(id);
     try {
-      await api.post(`/api/documents/${id}/convert`);
+      await api.post('/api/documents/' + id + '/convert');
       toast.success('แปลงเป็นใบเสร็จเรียบร้อยแล้ว');
       fetchDocuments();
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
       toast.error(error.response?.data?.error || 'ไม่สามารถแปลงได้');
     } finally {
@@ -111,11 +114,10 @@ export function DocumentList({ docType, title }: DocumentListProps) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`ค้นหา${title}...`}
+            placeholder={'ค้นหา' + title + '...'}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
           />
         </div>
-
         <div className="relative">
           <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <select
@@ -130,12 +132,8 @@ export function DocumentList({ docType, title }: DocumentListProps) {
             <option value="cancelled">ยกเลิก</option>
           </select>
         </div>
-
         <button
-          onClick={() => {
-            setEditDoc(null);
-            setShowForm(true);
-          }}
+          onClick={() => { setEditDoc(null); setShowForm(true); }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all text-sm shadow-lg shadow-primary/25 whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
@@ -151,7 +149,7 @@ export function DocumentList({ docType, title }: DocumentListProps) {
           </div>
         ) : documents.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
-            <p className="text-sm">ไม่พบ{title}</p>
+            <p className="text-sm">{'ไม่พบ' + title}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -172,9 +170,13 @@ export function DocumentList({ docType, title }: DocumentListProps) {
                   return (
                     <tr key={doc.id}>
                       <td>
-                        <span className="font-medium text-foreground text-sm">
+                        {/* คลิกเลขที่ → ไปหน้ารายละเอียด */}
+                        <button
+                          onClick={() => router.push('/documents/' + doc.id)}
+                          className="font-medium text-primary hover:underline text-sm text-left"
+                        >
                           {doc.docNumber}
-                        </span>
+                        </button>
                       </td>
                       <td className="hidden md:table-cell">
                         <span className="text-sm text-muted-foreground truncate max-w-[180px] block">
@@ -187,12 +189,7 @@ export function DocumentList({ docType, title }: DocumentListProps) {
                         </span>
                       </td>
                       <td className="text-center">
-                        <span
-                          className={cn(
-                            'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
-                            statusCfg.className
-                          )}
-                        >
+                        <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border', statusCfg.className)}>
                           {statusCfg.label}
                         </span>
                       </td>
@@ -203,31 +200,34 @@ export function DocumentList({ docType, title }: DocumentListProps) {
                       </td>
                       <td className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {/* Convert button (quotation only) */}
-                          {docType === 'quotation' &&
-                            doc.status !== 'converted' &&
-                            doc.status !== 'cancelled' && (
-                              <button
-                                onClick={() => handleConvert(doc.id)}
-                                disabled={converting === doc.id}
-                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-500/20 text-muted-foreground hover:text-blue-400 transition-colors"
-                                title="แปลงเป็นใบเสร็จ"
-                              >
-                                {converting === doc.id ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <ArrowRightLeft className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                            )}
+                          {/* View → หน้าใหม่ */}
+                          <button
+                            onClick={() => router.push('/documents/' + doc.id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="ดูรายละเอียด"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Convert (quotation only) */}
+                          {docType === 'quotation' && doc.status !== 'converted' && doc.status !== 'cancelled' && (
+                            <button
+                              onClick={() => handleConvert(doc.id)}
+                              disabled={converting === doc.id}
+                              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-500/20 text-muted-foreground hover:text-blue-400 transition-colors"
+                              title="แปลงเป็นใบเสร็จ"
+                            >
+                              {converting === doc.id
+                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                : <ArrowRightLeft className="w-3.5 h-3.5" />}
+                            </button>
+                          )}
 
                           {/* Edit */}
                           <button
-                            onClick={() => {
-                              setEditDoc(doc);
-                              setShowForm(true);
-                            }}
+                            onClick={() => { setEditDoc(doc); setShowForm(true); }}
                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="แก้ไข"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -236,6 +236,7 @@ export function DocumentList({ docType, title }: DocumentListProps) {
                           <button
                             onClick={() => setDeleteId(doc.id)}
                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                            title="ลบ"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -250,20 +251,17 @@ export function DocumentList({ docType, title }: DocumentListProps) {
         )}
       </div>
 
-      {/* Document Form Modal */}
+      {/* Form Modal */}
       {showForm && (
         <DocumentForm
           docType={docType}
           document={editDoc}
           onClose={() => setShowForm(false)}
-          onSuccess={() => {
-            setShowForm(false);
-            fetchDocuments();
-          }}
+          onSuccess={() => { setShowForm(false); fetchDocuments(); }}
         />
       )}
 
-      {/* Delete Confirmation */}
+      {/* Delete Confirm */}
       {deleteId && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-sm shadow-2xl">
